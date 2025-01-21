@@ -4,19 +4,12 @@ WORKDIR /app
 
 COPY . .
 
-RUN ls -la
+RUN go build -o main .
 
-WORKDIR /app/api
+FROM alpine:latest  
 
-RUN go build -o api .
+WORKDIR /root/
 
-RUN ls -la
+COPY --from=builder /app/main .
 
-FROM alpine:latest
-
-WORKDIR /app/api
-
-COPY --from=builder /app/api/api /app/api/
-RUN ls -la /app/api
-
-CMD ["./api"]
+CMD ["./main"]

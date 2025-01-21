@@ -1,13 +1,15 @@
-FROM golang:1.23-alpine
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
 COPY . .
 
-WORKDIR /app/worker
+RUN go build -o main .
 
-RUN go build -o worker .
+FROM alpine:latest  
 
-WORKDIR /app/worker
+WORKDIR /root/
 
-CMD ["./worker"]
+COPY --from=builder /app/main .
+
+CMD ["./main"]

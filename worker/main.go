@@ -25,7 +25,8 @@ func init() {
 func main() {
 	ctx := context.Background()
 	for {
-		taskJSON, err := rdb.RPop(ctx, "task_queue").Result()
+		taskJSON, err := rdb.BRPop(ctx, 0, "task_queue").Result()
+
 		if err == redis.Nil {
 			log.Println("No tasks in queue. Retrying...")
 			time.Sleep(2 * time.Second)
@@ -34,8 +35,11 @@ func main() {
 			log.Fatalf("Failed to fetch task: %v", err)
 		}
 
+		log.Printf("taskJson %v\n", taskJSON)
+
 		var task st.Task
-		if err := json.Unmarshal([]byte(taskJSON), &task); err != nil {
+
+		if err := json.Unmarshal([]byte(taskJSON[1]), &task); err != nil {
 			log.Printf("Failed to parse task: %v", err)
 			continue
 		}

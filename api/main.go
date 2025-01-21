@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"encoding/json"
@@ -23,6 +23,7 @@ func init() {
 // Add a new task to the queue
 func createTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var task st.Task
+
 	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
 		http.Error(w, "Invalid task format", http.StatusBadRequest)
 		return
@@ -34,13 +35,16 @@ func createTaskHandler(w http.ResponseWriter, r *http.Request) {
 	// Store the task in Redis
 	taskKey := fmt.Sprintf("task:%s", task.ID)
 	taskData, _ := json.Marshal(task)
+
+	log.Printf("TaskData: %v\n", taskData)
+
 	if err := rdb.Set(r.Context(), taskKey, taskData, 0).Err(); err != nil {
 		http.Error(w, "Failed to save task", http.StatusInternalServerError)
 		return
 	}
 
 	// Add task ID to the queue
-	if err := rdb.LPush(r.Context(), "task_queue", task.ID).Err(); err != nil {
+	if err := rdb.LPush(r.Context(), "task_queue", taskData).Err(); err != nil {
 		http.Error(w, "Failed to enqueue task", http.StatusInternalServerError)
 		return
 	}
